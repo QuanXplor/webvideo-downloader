@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import tools
-
+import yaml
+import os
 
 args = tools.getArguments({
     'name': '-t:h',
@@ -28,22 +29,26 @@ args = tools.getArguments({
     'help': 'the port that the backend server listens on, default 18888',
 }, {
     'name': ['-c', '--correct'],
-    'action': 'store_true', 
+    'action': 'store_true',
     'help': 'correct the timestamp of hls video, merge fragments using binnary mode',
 }, {
     'name': '-s',
-    'action': 'store_true', 
+    'action': 'store_true',
     'help': 'if set, will save the temp files',
 }, {
     'name': '-d',
-    'action': 'store_true', 
+    'action': 'store_true',
     'help': 'debug mode, log more info and save the temp files (ignore -s)',
 }, {
     'name': '-i',
-    'action': 'store_true', 
+    'action': 'store_true',
     'help': 'interactive mode, get url and file name from the command line',
+}, {
+    'name': '-cf',
+    'default': './config.yml',
+    'type':str,
+    'help': 'config path, read config file content'
 })
-
 
 # hls下载线程数
 hlsThreadCnt = getattr(args, 't:h')
@@ -77,3 +82,36 @@ videoFilePath = "../videos/"
 
 # 日志保存路径
 logPath = './logs/'
+
+os.makedirs(logPath,exist_ok=True)
+os.makedirs(videoFilePath, exist_ok=True)
+os.makedirs(tempFilePath, exist_ok=True)
+
+# 配置文件
+configPath = getattr(args, 'cf')
+
+
+def read_config(config_path):
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+            return data
+
+
+# 读取配置文件
+config = read_config(configPath)
+param = config if config else {}
+param.setdefault("push",{})
+param["push"].setdefault("pushPlus",{})
+plus_ = param["push"]["pushPlus"]
+plus_.setdefault("sendUrl", "http://www.pushplus.plus/send")
+plus_.setdefault("template", "## 下载信息\n"
+                                                " - **标题**:{title} \n"
+                                                " - **下载结果**:{result} \n"
+                                                " - **网页地址**:[点击此打开]({pageUrl}) \n"
+                                                " - **完成时间**:{time} \n"
+                                                " - **下载耗时**:{consuming} \n"
+                                                " - **分辨率**:{resolution} \n"
+                                                " - **视频时长**:{duration} \n"
+                                                " - **文件大小**:{size}")
+plus_['token']=os.getenv("PUSHPLUS_TOEKN") if os.getenv("PUSHPLUS_TOEKN") else plus_['token']

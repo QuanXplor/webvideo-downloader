@@ -2,11 +2,24 @@
 import json
 import threading
 import queue
+from logging.handlers import TimedRotatingFileHandler
+
 from dispatcher import TaskDispatcher
 import config
 import tools
 from tools import WebServer, CLIENT_CLOSE_EXCEPTION
+import logging
+import os
 
+log_fmt = '%(asctime)s\tFile \"%(filename)s\",line %(lineno)s\t%(levelname)s: %(message)s'
+formatter = logging.Formatter(log_fmt)
+# 创建TimedRotatingFileHandler对象
+log_file_handler = TimedRotatingFileHandler(filename=os.path.join(config.logPath,"downloader.log"), when="D", interval=1, backupCount=10)
+log_file_handler.suffix=log_file_handler.suffix+".log"
+log_file_handler.setFormatter(formatter)
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+log.addHandler(log_file_handler)
 
 # 守护模式下的后台服务器
 class DownloadServer(WebServer):

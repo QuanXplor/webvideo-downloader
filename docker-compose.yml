@@ -1,0 +1,12 @@
+version: "3"
+services:
+  downloader:
+    image: ["image name"]
+    ports:
+      - "18888:18888"
+    volumes:
+      - "./tmp/video:/opt/videos"
+      - "./tmp/log:/opt/logs"
+    environment:
+# pushplus的token
+      - "PUSHPLUS_TOEKN=123"
